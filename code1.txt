@@ -1,0 +1,110 @@
+关于QT手指多点触控问题。
+最近一个项目有多点触控的需要，在测试中发现使用了touchEvent之后，鼠标事件还是会进行处理，请问能不能在用手指触控时屏蔽鼠标事件？（程序也需要鼠标事件）。
+------解决思路----------------------
+重写event()函数，收到QEvent::TouchBegin时，accept事件。
+------解决思路----------------------
+最近刚好在做一个基于多点触摸的项目，主要是多点画笔的。
+
+touch事件要在event事件中进行处理，如果你是使用的QGraphicsView的话需要在ViewportEvent中处理。
+touch事件分为touchstart,update和end，这些事件只是标识触摸的开始，更新和结束，而我们真正要处理的是点的press，move和release状态。
+
+至于touch会自动转换成mouse事件，这个从查阅QT的自带的实现代码就可以看出来了，所以在touch'需要几个标识，在鼠标中作判断是touch还是mouse
+
+一段说明代码"
+
+
+bool TouchLayer::event(QEvent *event)
+
+{
+
+    QEvent::Type type = event->type();
+
+    if (type == QEvent::TouchBegin 
+------解决思路----------------------
+ type == QEvent::TouchEnd 
+------解决思路----------------------
+ type == QEvent::TouchUpdate) {
+
+        emit signal_touchwidth_show();
+
+        QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
+
+        QList<QTouchEvent::TouchPoint> touchPoints = touchEvent->touchPoints();
+
+        foreach (const QTouchEvent::TouchPoint &touchPoint, touchPoints) {
+
+            QPoint touchPos;
+
+            //这里处理下，一般来说第一个点会被处理自动转换为鼠标
+
+            //所以你需要添加一个bool的标识来在mouse事件处理时候
+
+            //判断要不要处理
+
+             if (touchPoint.id() == 0) {
+
+                    if (touchPoint.state() == Qt::TouchPointPressed) {
+
+                        mouseTouchInProgress = true;
+
+                    } else if (touchPoint.state() == Qt::TouchPointReleased) {
+
+                        mouseTouchInProgress = false;
+
+                    }
+
+                }
+
+
+
+            //处理touch其实更多是对点状态的处理
+
+            switch (touchPoint.state()) {
+
+            case Qt::TouchPointPressed:{
+
+               
+
+            }
+
+                    break;
+
+            case Qt::TouchPointMoved:{
+
+                
+
+            }
+
+                break;
+
+            case Qt::TouchPointReleased:{
+
+               
+
+                break;
+
+            default:
+
+                break;
+
+            }
+
+        }
+
+
+
+        // 触摸结束
+
+        if(type == QEvent::TouchEnd){
+
+        }
+
+          
+
+    }
+
+
+
+    return QWidget::event(event);
+
+}
